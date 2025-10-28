@@ -1,8 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
 @import "tailwindcss";
 
 :root {
-	font-family: 'Open Sans', sans-serif;
+	font-family: 'Roboto', sans-serif;
 	line-height: 1.5;
 	font-weight: 400;
 
@@ -12,11 +13,11 @@
 	-moz-osx-font-smoothing: grayscale;
 
 	--brand: #007B8B;
-	--brand-600: #0a6a5a;
+	--mid-green: #40C982;
 	--brand-700: #084f45;
 	--text: #0a0a0a;
 	--bg: #f5f7f9;
-	--radius: 10px;
+	--radius: 20px;
 	--shadow: 0 2px 8px rgba(0, 0, 0, .08);
 	--ring: 0 0 0 3px rgba(14, 135, 115, .25);
 }
@@ -110,6 +111,7 @@ textarea {
 	transition: transform .06s ease, box-shadow .15s ease, background-color .15s, color .15s, border-color .15s;
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: .5rem;
 	text-transform: uppercase;
 	min-width: 150px;
@@ -123,6 +125,12 @@ textarea {
 /* 1) FILLED */
 .btn--filled {
 	background: var(--brand);
+	color: #fff;
+	box-shadow: var(--shadow);
+}
+
+.btn--filled-mid-green {
+	background: var(--mid-green);
 	color: #fff;
 	box-shadow: var(--shadow);
 }
