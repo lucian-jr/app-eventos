@@ -85,13 +85,18 @@ label span {
 }
 
 input,
-textarea {
+textarea,
+select {
 	box-sizing: border-box;
 	border: none;
 	border: 1px solid #CCC;
-	border-radius: 5px;
-	padding: .8em .4em;
+	border-radius: 10px;
+	padding: .8em 1em;
 	background-color: transparent;
+}
+
+select {
+	padding: 0em 1em;
 }
 
 .iconInput {

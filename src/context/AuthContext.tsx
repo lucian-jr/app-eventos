@@ -17,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const LS_KEY = "mce:user";
 
 const isLocalhost = window.location.hostname === "localhost";
+const redirectLoginUrl = "https://www.meucopoeco.com.br/site/login?src=https://www.meucopoeco.com.br/app-eventos/";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<userType | null | undefined>(null);
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     } else {
                         setUser(null);
                         localStorage.removeItem(LS_KEY);
-                        window.location.href = "https://www.meucopoeco.com.br/site/login?src=https://www.meucopoeco.com.br/app-eventos/";
+                        window.location.href = redirectLoginUrl;
                     }
                 }
             } catch (err) {
@@ -84,8 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const logout = () => {
-        setUser(null);
         localStorage.removeItem(LS_KEY);
+
+        if (isLocalhost) {
+            setUser(undefined)
+        } else {
+            setUser(null);
+            
+            window.location.href = redirectLoginUrl;
+        }
     };
 
     return (

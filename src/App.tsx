@@ -15,9 +15,9 @@ import Footer from './components/Footer/Footer'
 // Pages
 import Home from "./pages/Home/Home"
 import Login from './pages/Login/Login'
+import CreateEvent from './pages/CreateEvent/CreateEvent'
+
 import type { userType } from './services/auth/auth.types'
-
-
 
 const BASENAME = import.meta.env.BASE_URL || "/app-eventos";
 
@@ -48,6 +48,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={u ? <Home /> : <Navigate to="/login" replace />} />
           <Route path="/login" element={!u ? <Login /> : <Navigate to="/" replace />} />
+          <Route path="/create-event" element={u ? <CreateEvent /> : <Navigate to="/login" replace />} />
         </Routes>
       </div>
       {u && <Footer />}

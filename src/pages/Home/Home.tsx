@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom"
+import { Navigate, useNavigate } from "react-router-dom"
 
 // Context
 import { useAuth } from "../../context/AuthContext";
@@ -13,7 +13,7 @@ import { formatDBDate } from "../../utils/date.utils";
 const Home = () => {
 
   const { user } = useAuth();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -39,8 +39,8 @@ const Home = () => {
 
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-bold text-2xl">MEUS EVENTOS</h2>
-          <button className="btn btn--filled-mid-green">CRIAR EVENTO</button>
+          <h2 className="font-bold text-[20px]">MEUS EVENTOS</h2>
+          <button className="btn btn--filled-mid-green" onClick={() => navigate('/create-event')}>CRIAR EVENTO</button>
         </div>
 
 
