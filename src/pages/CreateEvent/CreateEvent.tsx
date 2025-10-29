@@ -1,23 +1,126 @@
 import { useState } from 'react';
+
 import CurrencyInput from 'react-currency-input-field';
 
-type ProductsType = {
-	name: string
-	value: string
-	quantidade: number | null
-}
+import { formataValor } from '../../utils/value.util';
+import { Delete, QrCode } from "@mui/icons-material";
 
-type DevolutionDevicesType = {
-	name: string
-	number: string
-}
+// Types
+import type { DevicesType, ProductsType, PostEventType } from '../../services/events/events.types';
+import { postEvent } from '../../services/events/events.service';
+import { useAuth } from '../../context/AuthContext';
 
 const CreateEvent = () => {
-	const [products, setProducts] = useState<Array<ProductsType>>([]);
-	const [devolutionDevices, setDevolutionDevices] = useState<Array<DevolutionDevicesType>>([])
+	const { user } = useAuth();
+	
+	const [eventName, setEventName] = useState("");
+	const [eventDate, setEventDate] = useState("");
+	const [productName, setProductName] = useState("");
+	const [productValue, setProductValue] = useState("");
+	const [products, setProducts] = useState<ProductsType[]>([]);
+	const [device, setDevice] = useState("");
+	const [devices, setDevices] = useState<DevicesType[]>([]);
+	const [error, setError] = useState("");
 
 	const addProduct = async () => {
-		
+
+		if (!productName || !productValue) {
+			setError("Preencha os campos do produto corretamente!");
+			return;
+		}
+
+		const alreadyInsertedBefore = products.some((e) => e.name.toLocaleLowerCase() === productName.toLocaleLowerCase());
+
+		if (alreadyInsertedBefore) {
+			setError("Este produto já foi inserido anteriormente.")
+			return;
+		}
+
+		const dataProduct: ProductsType = {
+			name: productName,
+			value: formataValor(productValue),
+			quantity: null
+		}
+
+
+		setProducts(prev => [...prev, dataProduct])
+		setProductName("");
+		setProductValue("");
+		setError("");
+	};
+
+	const removeProduct = async (pName: string) => {
+
+		const confirmDelete = window.confirm(
+			`Tem certeza que deseja excluir o produto "${pName}"?`
+		);
+
+		if (!confirmDelete) return;
+
+		setProducts(prev => prev.filter(e => e.name.toLocaleLowerCase() !== pName.toLocaleLowerCase()));
+	};
+
+	const countDevices = (name: string) => {
+		const devicesNumber = devices.filter((d) => d.name.toLocaleLowerCase() === name.toLocaleLowerCase()).length + 1;
+		return devicesNumber;
+	};
+
+	const addDevice = async () => {
+
+		if (!device) {
+			setError("Selecione um Ponto de devolução!");
+			return;
+		}
+
+		const howManyAlready = countDevices(device);
+
+		const newDevice: DevicesType = {
+			name: device,
+			number: '01'
+		}
+
+		if (howManyAlready) {
+			newDevice.number = howManyAlready < 10 ? '0' + howManyAlready : String(howManyAlready);
+		}
+
+
+		setDevices(prev => [...prev, newDevice])
+		setDevice("");
+		setError("");
+	};
+
+	const removeDevice = async (dName: string, dNumber: string) => {
+
+		const confirmDelete = window.confirm(
+			"Tem certeza que deseja excluir o ponto de devolução?"
+		);
+
+		if (!confirmDelete) return;
+
+		setDevices(prev => prev.filter(e => e.name !== dName || e.number !== dNumber));
+	};
+
+	const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+
+		if(!(devices.length > 0 && products.length > 0 && eventName && eventDate)) return;
+
+		const eventData : PostEventType = {
+			user_id: user?.id,
+			nome: eventName,
+			data_evento: eventDate,
+			devices: devices,
+			products: products
+		}
+
+		const res = await postEvent(eventData);
+
+		if(res.status != 'success') {
+			setError(res.message)
+			return;
+		}
+
+		alert('Evento criado com sucesso!');
 	}
 
 	return (
@@ -26,13 +129,16 @@ const CreateEvent = () => {
 				<h1 className="font-bold text-[20px]">CRIAR EVENTO</h1>
 			</div>
 
-			<form>
+			{error && <p className="msg error-msg mb-4">{error}</p>}
+
+			<form onSubmit={createEvent}>
 				<div className="flex gap-5 mb-8">
 					<input
 						className="px-7 h-9 w-[100%]"
 						type="text"
 						name="nome"
 						placeholder="Nome do evento"
+						required
 					/>
 
 					<input
@@ -40,17 +146,56 @@ const CreateEvent = () => {
 						type="date"
 						name="data_evento"
 						placeholder="Data do evento"
+						required
 					/>
+				</div>
+
+				<h2 className="font-bold text-[20px] mb-4">Adicionar ponto de devolução</h2>
+
+				<div className="flex gap-6 mb-8">
+					<select
+						name="adiciona_produto"
+						className="px-7 h-9 w-[100%]"
+						onChange={(e) => setDevice(e.target.value)}
+						value={device}
+					>
+						<option value="" disabled>Selecione o material (leitor + impressora ou maquininha pdv)</option>
+						<option value="Leitor + impressora">Leitor + impressora</option>
+						<option value="Maquininha PDV">Maquininha PDV</option>
+					</select>
+
+					<button type="button" className="btn btn--filled-mid-green" onClick={addDevice}>ADICIONAR</button>
+				</div>
+
+				<div className="mb-8">
+					{devices.length > 0
+						? (
+							devices.map((device, idx) => (
+								<p key={idx} className="font-bold text-[14px]">
+									{device.name} {device.number}
+									<button
+										type='button'
+										className="ml-2.5 text-red-700"
+										onClick={() => removeDevice(device.name, device.number)}
+									><Delete /></button>
+								</p>
+							))
+						)
+						:
+						(<p className="font-bold text-[14px]"></p>)
+					}
 				</div>
 
 				<h2 className="font-bold text-[20px] mb-4">Adicionar produto(s)</h2>
 
-				<div className="flex gap-6 mb-8">
+				<div className="flex gap-6 mb-4">
 					<input
 						className="px-7 h-9 w-[50%]"
 						type="text"
 						name="nome_produto"
 						placeholder="Nome do produto"
+						value={productName}
+						onChange={(e) => setProductName(e.target.value)}
 					/>
 
 					<CurrencyInput
@@ -59,43 +204,56 @@ const CreateEvent = () => {
 						decimalsLimit={2}
 						intlConfig={{ locale: 'pt-BR', currency: 'BRL' }}
 						className="px-7 h-9 w-[50%] border rounded"
+						value={productValue}
+						onValueChange={(val) => setProductValue(val || "")}
 					/>
 
-					<button className="btn btn--filled-mid-green">ADICIONAR</button>
+					<button type='button' className="btn btn--filled-mid-green" onClick={addProduct}>ADICIONAR</button>
 				</div>
-
-				<h2 className="font-bold text-[20px] mb-4">Adicionar ponto de devolução</h2>
-
-				<div className="flex gap-6 mb-8">
-					<select name="adiciona_produto" className="px-7 h-9 w-[100%]">
-						<option value="" disabled selected>Selecione o material (leitor + impressora ou maquininha pdv)</option>
-					</select>
-
-					<button className="btn btn--filled-mid-green">ADICIONAR</button>
-				</div>
-
-				<h2 className="font-bold text-[20px] mb-4">Numero de vouchers necessários para esse evento</h2>
 
 				<div className="mb-8">
-					<div className="flex justify-between items-center mb-6">
-						<strong>Copo Eco R$10,00</strong>
-						<input
-							className="px-7 h-9"
-							type="text"
-							name="produto_quantidade"
-							placeholder="Quantidade"
-						/>
-					</div>
+					{products.length > 0
+						? (
+							products.map((product, idx) => (
+								<p key={idx} className="font-bold text-[14px]">
+									{product.name} R${product.value}
+									<button
+										type='button'
+										className="ml-2.5 text-red-700"
+										onClick={() => removeProduct(product.name)}
+									><Delete /></button>
+								</p>
+							))
+						)
+						:
+						(<p className="font-bold text-[14px]"></p>)
+					}
+				</div>
 
-					<div className="flex justify-between items-center">
-						<strong>Cartão Zig R$ 10,00</strong>
-						<input
-							className="px-7 h-9"
-							type="text"
-							name="produto_quantidade"
-							placeholder="Quantidade"
-						/>
-					</div>
+				{products.length > 0 && <h2 className="font-bold text-[20px] mb-4">Numero de vouchers necessários para esse evento</h2>}
+
+				<div className="mb-10">
+					{products.length > 0
+						? (
+							products.map((product, idx) => (
+								<div key={idx} className="flex justify-between items-center mb-6">
+									<p className="font-bold text-[14px]">{product.name} R${product.value}</p>
+									<input
+										className="px-7 h-9"
+										type="text"
+										name="produto_quantidade"
+										placeholder="Quantidade"
+									/>
+								</div>
+							))
+						)
+						:
+						(<p className="font-bold text-[14px]"></p>)
+					}
+				</div>
+
+				<div className="flex justify-center">
+					<button type="submit" className="btn btn--filled-mid-green">CRIAR EVENTO</button>
 				</div>
 			</form>
 		</div>

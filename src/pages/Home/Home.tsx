@@ -5,7 +5,7 @@ import { Navigate, useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext";
 import { getEvents } from "../../services/events/events.service";
 
-import type { eventType } from "../../services/events/events.types";
+import type { EventType } from "../../services/events/events.types";
 
 // Utils
 import { formatDBDate } from "../../utils/date.utils";
@@ -17,7 +17,7 @@ const Home = () => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const [events, setEvents] = useState<eventType[] | null>(null)
+  const [events, setEvents] = useState<EventType[] | null>(null)
 
   useEffect(() => {
     const fetchEvents = async () => {

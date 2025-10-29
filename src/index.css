@@ -219,6 +219,7 @@ select {
 	max-width: 500px;
 	padding: 5px 15px;
 	margin: auto;
+	margin-bottom: 20px;
 }
 
 .error-msg {

@@ -1,11 +1,36 @@
-export type eventType = {
+export type DevicesType = {
+    name: string
+    number: string
+}
+
+export type ProductsType = {
+    name: string
+    value: string
+    quantity: number | null
+}
+
+export type EventType = {
     id: number
     nome: string
     data_evento: string
 };
 
-export type eventsGetResponseType = {
+export type EventsGetResponseType = {
     status: string
     message: string
-    events_data: eventType[] | null
+    events_data: EventType[] | null
+};
+
+export type PostEventType = {
+    user_id: number | undefined
+    nome: string
+    data_evento: string
+    devices: DevicesType[]
+    products: ProductsType[]
+}
+
+export type EventPostResponseType = {
+    status: string
+    message: string
+    event_id: number
 };
