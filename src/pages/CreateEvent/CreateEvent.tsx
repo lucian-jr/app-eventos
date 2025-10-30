@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import CurrencyInput from 'react-currency-input-field';
 
@@ -7,18 +7,23 @@ import { Delete, QrCode } from "@mui/icons-material";
 
 // Types
 import type { DevicesType, ProductsType, PostEventType } from '../../services/events/events.types';
+
+// API
 import { postEvent } from '../../services/events/events.service';
+
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const CreateEvent = () => {
 	const { user } = useAuth();
-	
+	const navigate = useNavigate();
 	const [eventName, setEventName] = useState("");
 	const [eventDate, setEventDate] = useState("");
 	const [productName, setProductName] = useState("");
 	const [productValue, setProductValue] = useState("");
 	const [products, setProducts] = useState<ProductsType[]>([]);
 	const [device, setDevice] = useState("");
+	const [numeroImpressora, setNumeroImpressora] = useState("");
 	const [devices, setDevices] = useState<DevicesType[]>([]);
 	const [error, setError] = useState("");
 
@@ -76,7 +81,8 @@ const CreateEvent = () => {
 
 		const newDevice: DevicesType = {
 			name: device,
-			number: '01'
+			number: '01',
+			numero_impressora: numeroImpressora
 		}
 
 		if (howManyAlready) {
@@ -103,9 +109,9 @@ const CreateEvent = () => {
 	const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
-		if(!(devices.length > 0 && products.length > 0 && eventName && eventDate)) return;
+		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate)) return;
 
-		const eventData : PostEventType = {
+		const eventData: PostEventType = {
 			user_id: user?.id,
 			nome: eventName,
 			data_evento: eventDate,
@@ -115,13 +121,33 @@ const CreateEvent = () => {
 
 		const res = await postEvent(eventData);
 
-		if(res.status != 'success') {
+		if (res.status != 'success') {
 			setError(res.message)
 			return;
 		}
 
 		alert('Evento criado com sucesso!');
+		navigate('/', { replace: true });
 	}
+
+	const handleQuantityChange = (prodName: string, qtyStr: string) => {
+		const onlyDigits = qtyStr.replace(/\D/g, "");
+		const qty = onlyDigits === "" ? null : Math.max(0, parseInt(onlyDigits, 10));
+
+		setProducts(prev =>
+			prev.map(p =>
+				p.name.toLowerCase() === prodName.toLowerCase()
+					? { ...p, quantity: qty }
+					: p
+			)
+		);
+	};
+
+	useEffect(() => {
+		if(device === 'Maquininha PDV') {
+			console.log('Maquininha')
+		}
+	}, [device])
 
 	return (
 		<div>
@@ -138,6 +164,8 @@ const CreateEvent = () => {
 						type="text"
 						name="nome"
 						placeholder="Nome do evento"
+						value={eventName}
+						onChange={(e) => setEventName(e.target.value)}
 						required
 					/>
 
@@ -146,6 +174,8 @@ const CreateEvent = () => {
 						type="date"
 						name="data_evento"
 						placeholder="Data do evento"
+						value={eventDate}
+						onChange={(e) => setEventDate(e.target.value)}
 						required
 					/>
 				</div>
@@ -163,6 +193,18 @@ const CreateEvent = () => {
 						<option value="Leitor + impressora">Leitor + impressora</option>
 						<option value="Maquininha PDV">Maquininha PDV</option>
 					</select>
+
+					{ device === 'Maquininha PDV' && 
+						<input
+							className="h-9"
+							type="text"
+							name="numero_impressora"
+							placeholder="Ex: 000303"
+							value={numeroImpressora ?? ""}
+							onChange={(e) => setNumeroImpressora(e.target.value)}
+							required
+						/>
+					}
 
 					<button type="button" className="btn btn--filled-mid-green" onClick={addDevice}>ADICIONAR</button>
 				</div>
@@ -230,7 +272,7 @@ const CreateEvent = () => {
 					}
 				</div>
 
-				{products.length > 0 && <h2 className="font-bold text-[20px] mb-4">Numero de vouchers necessários para esse evento</h2>}
+				{products.length > 0 && <h2 className="font-bold text-[20px] mb-4">Número de vouchers necessários para esse evento</h2>}
 
 				<div className="mb-10">
 					{products.length > 0
@@ -243,6 +285,9 @@ const CreateEvent = () => {
 										type="text"
 										name="produto_quantidade"
 										placeholder="Quantidade"
+										value={product.quantity ?? ""}
+										onChange={(e) => handleQuantityChange(product.name, e.target.value)}
+										required
 									/>
 								</div>
 							))

@@ -1,6 +1,7 @@
 export type DevicesType = {
     name: string
     number: string
+    numero_impressora: string | null
 }
 
 export type ProductsType = {

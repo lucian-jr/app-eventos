@@ -39,7 +39,7 @@ export const postEvent = async (eventData: PostEventType) => {
         return {
             'status': 'error',
             'message': message,
-            'events_data': null
+            'event_id': null
         };
     }
 }
