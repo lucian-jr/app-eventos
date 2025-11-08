@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import CurrencyInput from 'react-currency-input-field';
 
 import { formataValor } from '../../utils/value.util';
-import { Delete, QrCode } from "@mui/icons-material";
+import { Delete } from "@mui/icons-material";
 
 // Types
 import type { DevicesType, ProductsType, PostEventType } from '../../services/events/events.types';

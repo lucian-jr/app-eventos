@@ -51,10 +51,16 @@ const Home = () => {
             events.map(e => (
               <div className="event bg-[#F1F1F1] rounded-1xl shadow-md mb-4 p-[2em] flex justify-between" key={e.id}>
                 <div>
-                  <h3 className="font-bold text-[20px]">{e.nome} - {formatDBDate(e.data_evento)}</h3>
+                  <h3 className="font-bold text-[20px] mb-3">{e.nome} - {formatDBDate(e.data_evento)}</h3>
+                    {e.products.length ? e.products.map((product, idx) => (
+                      <p className="text-[14px]" key={idx}>{product.name}</p>
+                    )) 
+                    : 
+                    <p className="text-[14px]">Sem produtos registrados</p>
+                  }
                 </div>
                 <div>
-                  <button className="btn btn--filled-mid-green">VER EVENTO</button>
+                  <button className="btn btn--filled-mid-green" onClick={() => navigate(`/dashboard/${e.id}`)}>VER EVENTO</button>
                 </div>
               </div>
             ))

@@ -1,7 +1,5 @@
 import './App.css'
 
-import { useEffect, useState } from 'react'
-
 // Router
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
@@ -11,25 +9,20 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 // Components 
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 
 // Pages
 import Home from "./pages/Home/Home"
 import Login from './pages/Login/Login'
 import CreateEvent from './pages/CreateEvent/CreateEvent'
-
-import type { userType } from './services/auth/auth.types'
+import Dashboard from './pages/Dashboard/Dashboard'
 
 const BASENAME = import.meta.env.BASE_URL || "/app-eventos";
 
 function AppShell() {
-  const { user } = useAuth();
-  const [u, setU] = useState<userType | null | undefined>();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    if (user) setU(user)
-  }, [user])
-
-  if (user === null) {
+  if (loading) {
     return (
       <div className="w-full min-h-[100vh] flex justify-center items-center">
         <p>Carregando...</p>
@@ -37,26 +30,49 @@ function AppShell() {
     );
   }
 
-  const pageHeight = u
+  const pageHeight = user
     ? "container max-w-5xl mx-auto min-h-[60vh] mb-[3rem] mt-[2rem] px-4"
     : "w-full min-h-[100vh] flex justify-center items-center";
 
   return (
     <>
-      {u && <Navbar />}
+      {user && <Navbar />}
       <div className={pageHeight}>
         <Routes>
-          <Route path="/" element={u ? <Home /> : <Navigate to="/login" replace />} />
-          <Route path="/login" element={!u ? <Login /> : <Navigate to="/" replace />} />
-          <Route path="/create-event" element={u ? <CreateEvent /> : <Navigate to="/login" replace />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-event"
+            element={
+              <ProtectedRoute>
+                <CreateEvent />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/:id"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={!user ? <Login /> : <Navigate to="/" replace />}
+          />
         </Routes>
       </div>
-      {u && <Footer />}
+      {user && <Footer />}
     </>
   );
 }
-
-
 
 export default function App() {
   return (

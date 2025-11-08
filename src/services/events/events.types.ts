@@ -14,6 +14,8 @@ export type EventType = {
     id: number
     nome: string
     data_evento: string
+    devices: DevicesType[]
+    products: ProductsType[]
 };
 
 export type EventsGetResponseType = {
@@ -29,6 +31,13 @@ export type PostEventType = {
     devices: DevicesType[]
     products: ProductsType[]
 }
+
+export type EventGetResponseType = {
+    status: string
+    message: string
+    event_data: EventType | null
+};
+
 
 export type EventPostResponseType = {
     status: string
