@@ -250,3 +250,17 @@ body {
     top: -.5em;
     position: relative;
 }
+
+@media (max-width:800px) {
+    .grid-products {
+        margin-top: 20px;
+        overflow-x: auto;
+    }
+    .page-head h1 {
+        text-align: center;
+    }
+    .title-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+}

@@ -110,13 +110,13 @@ const Dashboard = () => {
 						<h1 className="page-title">{event?.nome} – {formatDBDate(event?.data_evento)}</h1>
 					</div>
 
-					<div className="flex justify-between items-center">
+					<div className="flex justify-between items-center title-row">
 						<h2 className="section-title">Total de devoluções por produto</h2>
 						<button className="btn-refresh" onClick={fetchDataEvent}>ATUALIZAR DADOS</button>
 					</div>
 
 
-					<div className="flex gap-5 mb-10">
+					<div className="flex gap-5 mb-10 grid-products">
 						{dashboardData && dashboardData.products_data.map((p, index) => (
 							<div className="product-collumn">
 								<div className="pill">

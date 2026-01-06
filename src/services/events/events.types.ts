@@ -28,6 +28,8 @@ export type PostEventType = {
     user_id: number | undefined
     nome: string
     data_evento: string
+    login_evento: string
+    senha_evento: string
     devices: DevicesType[]
     products: ProductsType[]
 }

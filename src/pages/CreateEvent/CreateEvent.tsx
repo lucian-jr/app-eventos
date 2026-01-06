@@ -19,6 +19,8 @@ const CreateEvent = () => {
 	const navigate = useNavigate();
 	const [eventName, setEventName] = useState("");
 	const [eventDate, setEventDate] = useState("");
+	const [eventLogin, setEventLogin] = useState("");
+	const [eventSenha, setEventSenha] = useState("");
 	const [productName, setProductName] = useState("");
 	const [productValue, setProductValue] = useState("");
 	const [products, setProducts] = useState<ProductsType[]>([]);
@@ -26,6 +28,7 @@ const CreateEvent = () => {
 	const [numeroImpressora, setNumeroImpressora] = useState("");
 	const [devices, setDevices] = useState<DevicesType[]>([]);
 	const [error, setError] = useState("");
+	const [loading, setLoading] = useState(false);
 
 	const addProduct = async () => {
 
@@ -108,13 +111,19 @@ const CreateEvent = () => {
 
 	const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		setLoading(true);
 
-		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate)) return;
+		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate)) {
+			setLoading(false);
+			return;
+		} 
 
 		const eventData: PostEventType = {
 			user_id: user?.id,
 			nome: eventName,
 			data_evento: eventDate,
+			login_evento: eventLogin,
+			senha_evento: eventSenha,
 			devices: devices,
 			products: products
 		}
@@ -122,7 +131,8 @@ const CreateEvent = () => {
 		const res = await postEvent(eventData);
 
 		if (res.status != 'success') {
-			setError(res.message)
+			setError(res.message);
+			setLoading(false);
 			return;
 		}
 
@@ -144,7 +154,7 @@ const CreateEvent = () => {
 	};
 
 	useEffect(() => {
-		if(device === 'Maquininha PDV') {
+		if (device === 'Maquininha PDV') {
 			console.log('Maquininha')
 		}
 	}, [device])
@@ -158,7 +168,7 @@ const CreateEvent = () => {
 			{error && <p className="msg error-msg mb-4">{error}</p>}
 
 			<form onSubmit={createEvent}>
-				<div className="flex gap-5 mb-8">
+				<div className="flex gap-5 mb-2">
 					<input
 						className="px-7 h-9 w-[100%]"
 						type="text"
@@ -179,6 +189,27 @@ const CreateEvent = () => {
 						required
 					/>
 				</div>
+				<div className="flex gap-5 mb-8">
+					<input
+						className="px-7 h-9 w-[50%]"
+						type="text"
+						name="nome"
+						placeholder="Login"
+						value={eventLogin}
+						onChange={(e) => setEventLogin(e.target.value)}
+						required
+					/>
+
+					<input
+						className="px-7 h-9 w-[50%]"
+						type="text"
+						name="nome"
+						placeholder="Senha"
+						value={eventSenha}
+						onChange={(e) => setEventSenha(e.target.value)}
+						required
+					/>
+				</div>
 
 				<h2 className="font-bold text-[20px] mb-4">Adicionar ponto de devolução</h2>
 
@@ -194,7 +225,7 @@ const CreateEvent = () => {
 						<option value="Maquininha PDV">Maquininha PDV</option>
 					</select>
 
-					{ device === 'Maquininha PDV' && 
+					{device === 'Maquininha PDV' &&
 						<input
 							className="h-9"
 							type="text"
@@ -298,7 +329,7 @@ const CreateEvent = () => {
 				</div>
 
 				<div className="flex justify-center">
-					<button type="submit" className="btn btn--filled-mid-green">CRIAR EVENTO</button>
+					<button type="submit" className="btn btn--filled-mid-green" disabled={loading}>CRIAR EVENTO</button>
 				</div>
 			</form>
 		</div>
