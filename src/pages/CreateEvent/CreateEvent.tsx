@@ -137,7 +137,7 @@ const CreateEvent = () => {
 		}
 
 		alert('Evento criado com sucesso!');
-		navigate('/', { replace: true });
+		navigate(`/dashboard/${res.event_id}`, { replace: true });
 	}
 
 	const handleQuantityChange = (prodName: string, qtyStr: string) => {

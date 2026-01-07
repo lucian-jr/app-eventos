@@ -4,13 +4,21 @@ import { useParams } from "react-router-dom";
 // CSS
 import './Dashboard.css'
 
+// Components
+import { Loader } from "../../components/Loader/Loader";
+
 // Types
 import type { EventType } from "../../services/events/events.types";
 import type { DashboardDataType } from "../../services/dashboard/dashboard.types";
 
-// API
+// API & HOOKS
 import { getEvent } from "../../services/events/events.service";
 import { useAuth } from "../../context/AuthContext";
+import { getDashboardData } from "../../services/dashboard/dashboard.service";
+import { useVoucherFactory } from "../../hooks/useVoucherFactory";
+
+// Utils
+import { formatDBDate } from "../../utils/date.utils";
 
 // Chart.js
 import { Pie } from 'react-chartjs-2'
@@ -26,31 +34,38 @@ import {
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-import { getDashboardData } from "../../services/dashboard/dashboard.service";
-import { formatDBDate } from "../../utils/date.utils";
-
 const Dashboard = () => {
 
 	const { id: event_id } = useParams();
 	const { user } = useAuth();
 	const [event, setEvent] = useState<EventType | null>(null)
 	const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null)
+	const [isLoadingData, setIsLoadingData] = useState(true);
+
+	const { dados: progressoVouchers } = useVoucherFactory();
 
 	const fetchDataEvent = async () => {
 		if (!user || !event_id) return;
 
-		const res = await getEvent(parseInt(event_id), user.id);
+		setIsLoadingData(true); // Garante que o load aparece ao recarregar
 
-		if (res.status == 'success') {
-			// console.log(res)
-			setEvent(res.event_data)
-		}
+		try {
+			const res = await getEvent(parseInt(event_id), user.id);
 
-		const resDashboardData = await getDashboardData(parseInt(event_id));
+			if (res.status == 'success') {
+				setEvent(res.event_data)
+			}
 
-		if (resDashboardData.status == 'success') {
-			console.log(resDashboardData)
-			setDashboardData(resDashboardData.dashboard_data)
+			const resDashboardData = await getDashboardData(parseInt(event_id));
+
+			if (resDashboardData.status == 'success') {
+				setDashboardData(resDashboardData.dashboard_data)
+			}
+		} catch (error) {
+			console.error("Erro ao buscar dados:", error);
+		} finally {
+			// O segredo está aqui: O finally roda dando certo ou errado
+			setIsLoadingData(false);
 		}
 	}
 
@@ -102,6 +117,14 @@ const Dashboard = () => {
 		);
 	}
 
+	if (isLoadingData) {
+		return (
+			<div className="flex justify-center items-center h-[80vh]">
+				<Loader />
+			</div>
+		);
+	}
+
 	return (
 		<div>
 			{dashboardData ?
@@ -111,14 +134,49 @@ const Dashboard = () => {
 					</div>
 
 					<div className="flex justify-between items-center title-row">
-						<h2 className="section-title">Total de devoluções por produto</h2>
+						<h2 className="section-title">Dados do evento</h2>
 						<button className="btn-refresh" onClick={fetchDataEvent}>ATUALIZAR DADOS</button>
 					</div>
 
+					<div className="pill-collum flex">
+						<div className="mr-10"><strong>Login:</strong> {dashboardData.user.login}</div>
+						<div><strong>Senha:</strong> {dashboardData.user.senha}</div>
+					</div>
+
+					{progressoVouchers.status_job !== 'idle' && progressoVouchers.total > 0 && (
+						<div className="mb-8 p-4 border rounded bg-gray-50">
+							<h2 className="section-title mb-2">
+								{progressoVouchers.status_job === 'concluido' ? '✅ Geração de Vouchers Concluída' : '⚙️ Gerando Vouchers...'}
+							</h2>
+
+							<div style={{ width: '100%', background: '#eee', height: 24, borderRadius: 12, overflow: 'hidden' }}>
+								<div style={{
+									width: `${progressoVouchers.porcentagem}%`,
+									background: progressoVouchers.status_job === 'concluido' ? '#41c982' : '#027b8b',
+									height: '100%',
+									transition: 'width 0.5s',
+									textAlign: 'center',
+									lineHeight: '24px',
+									color: '#fff',
+									fontSize: '12px',
+									fontWeight: 'bold'
+								}}>
+									{progressoVouchers.porcentagem}%
+								</div>
+							</div>
+							<p className="text-sm mt-1 text-gray-600">
+								Processados: <strong>{progressoVouchers.processados}</strong> de {progressoVouchers.total}
+							</p>
+						</div>
+					)}
+
+					<div className="flex justify-between items-center title-row">
+						<h2 className="section-title">Total de devoluções por produto</h2>
+					</div>
 
 					<div className="flex gap-5 mb-10 grid-products">
-						{dashboardData && dashboardData.products_data.map((p, index) => (
-							<div className="product-collumn">
+						{dashboardData.products_data.map((p, index) => (
+							<div key={index} className="product-collumn">
 								<div className="pill">
 									<div className="label"><span className="badge">{p.nome}</span></div>
 									<div>{p.total_devolucoes}</div>

@@ -98,6 +98,14 @@ body {
     margin-top: 10px;
 }
 
+.pill-collum {
+    background: var(--card-alt);
+    border-radius: 12px;
+    padding: 12px 25px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
 .pill .label {
     display: flex;
     gap: 10px;

@@ -14,7 +14,13 @@ export type DashboardDevicesType = {
     vouchers_produto: Record<number, number>;
 };
 
+export type DashboardUserType = {
+    login: string;
+    senha: string;
+};
+
 export type DashboardDataType = {
+    user: DashboardUserType
     products_data: DashboardProductsType[]
     devices_data: DashboardDevicesType[]
 }

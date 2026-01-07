@@ -1,0 +1,23 @@
+/* Container para centralizar o loader na tela ou na div pai */
+.loader-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 50vh; /* Ocupa pelo menos metade da altura da tela */
+}
+
+/* A bolinha girando */
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3; /* Cor cinza claro (fundo) */
+    border-top: 5px solid #027b8b; /* Cor principal (a mesma do seu gráfico) */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
