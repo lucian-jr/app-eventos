@@ -220,6 +220,7 @@ select {
 	padding: 5px 15px;
 	margin: auto;
 	margin-bottom: 20px;
+	text-align: center;
 }
 
 .error-msg {

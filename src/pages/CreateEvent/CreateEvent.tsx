@@ -26,7 +26,9 @@ const CreateEvent = () => {
 	const [products, setProducts] = useState<ProductsType[]>([]);
 	const [device, setDevice] = useState("");
 	const [numeroImpressora, setNumeroImpressora] = useState("");
+	const [numeroImpressoraLeitor, setNumeroImpressoraLeitor] = useState("");
 	const [devices, setDevices] = useState<DevicesType[]>([]);
+	const [productsQuantityVisibility, setProductsQuantityVisibility] = useState(true);
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 
@@ -68,11 +70,6 @@ const CreateEvent = () => {
 		setProducts(prev => prev.filter(e => e.name.toLocaleLowerCase() !== pName.toLocaleLowerCase()));
 	};
 
-	const countDevices = (name: string) => {
-		const devicesNumber = devices.filter((d) => d.name.toLocaleLowerCase() === name.toLocaleLowerCase()).length + 1;
-		return devicesNumber;
-	};
-
 	const addDevice = async () => {
 
 		if (!device) {
@@ -80,33 +77,63 @@ const CreateEvent = () => {
 			return;
 		}
 
-		const howManyAlready = countDevices(device);
+		if (!numeroImpressora || numeroImpressoraLeitor) {
+			setError("Você precisa informar um número para este dispositivo!");
+			return;
+		}
+
+		const numberImpressotaLeitorFormated = numeroImpressoraLeitor ? numeroImpressoraLeitor.padStart(2, '0') : "";
+
+		const isMaquininha = numeroImpressora ? true : false;
+
+		let jaExiste = false;
+
+		console.log('is', numeroImpressora)
+
+		if (isMaquininha) {
+			// LÓGICA PARA MAQUININHA: Valida pelo numeroImpressora
+			if (!numeroImpressora) {
+				setError("Informe o número da impressora para a Maquininha!");
+				return;
+			}
+
+			// Procura se já tem alguma maquininha com esse número de impressora
+			jaExiste = devices.some((d) => d.numero_impressora === numeroImpressora);
+
+			if (jaExiste) {
+				setError(`A Maquininha com a impressora nº ${numeroImpressora} já foi inserida!`);
+				return;
+			}
+
+		} else {
+			// LÓGICA PARA OUTROS DISPOSITIVOS: Valida pelo number (leitor)
+
+			jaExiste = devices.some((d) => d.number === numberImpressotaLeitorFormated && d.name !== "Maquininha PDV");
+
+			if (jaExiste) {
+				setError(`O ponto de devolução com o número ${numberImpressotaLeitorFormated} já foi inserido anteriormente!`);
+				return;
+			}
+		}
 
 		const newDevice: DevicesType = {
 			name: device,
-			number: '01',
+			number: numberImpressotaLeitorFormated,
 			numero_impressora: numeroImpressora
 		}
 
-		if (howManyAlready) {
-			newDevice.number = howManyAlready < 10 ? '0' + howManyAlready : String(howManyAlready);
-		}
+		setDevices(prev => [...prev, newDevice]);
 
-
-		setDevices(prev => [...prev, newDevice])
 		setDevice("");
+		setNumeroImpressora("");
+		setNumeroImpressoraLeitor("");
 		setError("");
 	};
 
-	const removeDevice = async (dName: string, dNumber: string) => {
-
-		const confirmDelete = window.confirm(
-			"Tem certeza que deseja excluir o ponto de devolução?"
+	const removeDevice = (indexToRemove: number) => {
+		setDevices(prevDevices =>
+			prevDevices.filter((_, index) => index !== indexToRemove)
 		);
-
-		if (!confirmDelete) return;
-
-		setDevices(prev => prev.filter(e => e.name !== dName || e.number !== dNumber));
 	};
 
 	const createEvent = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -116,21 +143,29 @@ const CreateEvent = () => {
 		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate)) {
 			setLoading(false);
 			return;
-		} 
+		}
+
+		let loginEvento = eventLogin;
+		let senhaEvento = eventSenha;
+
+		if (productsQuantityVisibility === false) {
+			loginEvento = '';
+			senhaEvento = '';
+		}
 
 		const eventData: PostEventType = {
 			user_id: user?.id,
 			nome: eventName,
 			data_evento: eventDate,
-			login_evento: eventLogin,
-			senha_evento: eventSenha,
+			login_evento: loginEvento,
+			senha_evento: senhaEvento,
 			devices: devices,
 			products: products
 		}
 
 		const res = await postEvent(eventData);
 
-		if (res.status != 'success') {
+		if (res.status !== 'success') {
 			setError(res.message);
 			setLoading(false);
 			return;
@@ -154,10 +189,19 @@ const CreateEvent = () => {
 	};
 
 	useEffect(() => {
-		if (device === 'Maquininha PDV') {
-			console.log('Maquininha')
+		setProductsQuantityVisibility(true);
+
+		let onlyMaquininhas = true;
+
+		devices.forEach(element => {
+			if (element.name === 'Leitor + impressora') onlyMaquininhas = false;
+		});
+
+		if (onlyMaquininhas === true) {
+			setProductsQuantityVisibility(false);
 		}
-	}, [device])
+		console.log(productsQuantityVisibility)
+	}, [devices])
 
 	return (
 		<div>
@@ -237,6 +281,18 @@ const CreateEvent = () => {
 						/>
 					}
 
+					{device === 'Leitor + impressora' &&
+						<input
+							className="h-9"
+							type="text"
+							name="number"
+							placeholder="Número impressora"
+							value={numeroImpressoraLeitor ?? ""}
+							onChange={(e) => setNumeroImpressoraLeitor(e.target.value)}
+							required
+						/>
+					}
+
 					<button type="button" className="btn btn--filled-mid-green" onClick={addDevice}>ADICIONAR</button>
 				</div>
 
@@ -245,11 +301,11 @@ const CreateEvent = () => {
 						? (
 							devices.map((device, idx) => (
 								<p key={idx} className="font-bold text-[14px]">
-									{device.name} {device.number}
+									{device.name} {device.number || device.numero_impressora}
 									<button
 										type='button'
 										className="ml-2.5 text-red-700"
-										onClick={() => removeDevice(device.name, device.number)}
+										onClick={() => removeDevice(idx)}
 									><Delete /></button>
 								</p>
 							))
@@ -262,14 +318,16 @@ const CreateEvent = () => {
 				<h2 className="font-bold text-[20px] mb-4">Adicionar produto(s)</h2>
 
 				<div className="flex gap-6 mb-4">
-					<input
+					<select
 						className="px-7 h-9 w-[50%]"
-						type="text"
 						name="nome_produto"
-						placeholder="Nome do produto"
-						value={productName}
 						onChange={(e) => setProductName(e.target.value)}
-					/>
+						value={productName}
+					>
+						<option value="" disabled>Selecione o tipo de produto</option>
+						<option value="Copo Eco">Copo Eco</option>
+						<option value="Cartão Cashless">Cartão Cashless</option>
+					</select>
 
 					<CurrencyInput
 						name="valor_produto"
@@ -311,15 +369,18 @@ const CreateEvent = () => {
 							products.map((product, idx) => (
 								<div key={idx} className="flex justify-between items-center mb-6">
 									<p className="font-bold text-[14px]">{product.name} R${product.value}</p>
-									<input
-										className="px-7 h-9"
-										type="text"
-										name="produto_quantidade"
-										placeholder="Quantidade"
-										value={product.quantity ?? ""}
-										onChange={(e) => handleQuantityChange(product.name, e.target.value)}
-										required
-									/>
+									{productsQuantityVisibility && (
+										<input
+											className="px-7 h-9"
+											type="text"
+											name="produto_quantidade"
+											placeholder="Quantidade"
+											value={product.quantity ?? ""}
+											onChange={(e) => handleQuantityChange(product.name, e.target.value)}
+											required
+										/>
+									)}
+
 								</div>
 							))
 						)

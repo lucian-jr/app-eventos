@@ -27,9 +27,11 @@ export const createVoucherGenerationJob = async (jobData: VoucherJobRequestType)
     }
 }
 
-export const getVoucherGenerationStatus = async (): Promise<VoucherStatusResponseType> => {
+export const getVoucherGenerationStatus = async (eventId?: number): Promise<VoucherStatusResponseType> => {
     try {
-        const response = await api.get(`consultar_status_geracao?v=${Date.now()}`);
+        const paramEvento = eventId ? `&id_evento=${eventId}` : '';
+        
+        const response = await api.get(`consultar_status_geracao?v=${Date.now()}${paramEvento}`);
         
         const data: VoucherStatusResponseType = response.data;
 
