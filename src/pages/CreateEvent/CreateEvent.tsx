@@ -77,7 +77,7 @@ const CreateEvent = () => {
 			return;
 		}
 
-		if (!numeroImpressora || numeroImpressoraLeitor) {
+		if (!numeroImpressora && !numeroImpressoraLeitor) {
 			setError("Você precisa informar um número para este dispositivo!");
 			return;
 		}
