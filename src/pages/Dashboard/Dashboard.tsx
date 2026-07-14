@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import './Dashboard.css'
 
@@ -14,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getDashboardData } from "../../services/dashboard/dashboard.service";
 import { useVoucherFactory } from "../../hooks/useVoucherFactory";
 
-import { formatDBDate } from "../../utils/date.utils";
+import { formatEventDateRange } from "../../utils/date.utils";
 
 import QRCode from "react-qr-code";
 import { QrCode2, Close } from "@mui/icons-material";
@@ -35,6 +35,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const Dashboard = () => {
 
 	const { id: event_id } = useParams();
+	const navigate = useNavigate();
 	const { user } = useAuth();
 	const [event, setEvent] = useState<EventType | null>(null)
 	const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null)
@@ -81,11 +82,14 @@ const Dashboard = () => {
 	};
 
 	function PieChart({ devolucoes, resgates }: { devolucoes: number; resgates: number }) {
+		const naoResgatados = Math.max(0, devolucoes - resgates);
+
 		const data: ChartData<'pie'> = {
+			labels: ['Não resgatados', 'Resgatados'],
 			datasets: [
 				{
 					label: "%",
-					data: [devolucoes, resgates],
+					data: [naoResgatados, resgates],
 					backgroundColor: ["rgb(2, 123, 139)", "rgb(65, 201, 130)"],
 					borderWidth: 0,
 					hoverOffset: 4,
@@ -97,7 +101,7 @@ const Dashboard = () => {
 			responsive: true,
 			maintainAspectRatio: false,
 			plugins: {
-				legend: { position: 'bottom' as const },
+				legend: { display: false },
 				tooltip: {
 					callbacks: {
 						label: (ctx: TooltipItem<'pie'>) => {
@@ -131,7 +135,8 @@ const Dashboard = () => {
 			{dashboardData ?
 				<div>
 					<div className="page-head">
-						<h1 className="page-title">{event?.nome} – {formatDBDate(event?.data_evento)}</h1>
+						<h1 className="page-title">{event?.nome} – {formatEventDateRange(event?.data_evento, event?.data_fim)}</h1>
+						<button className="btn-refresh" onClick={() => navigate(`/edit-event/${event_id}`)}>EDITAR EVENTO</button>
 					</div>
 
 					<div className="flex justify-between items-center title-row">
@@ -194,7 +199,10 @@ const Dashboard = () => {
 
 								{/* CABEÇALHO DO CARD: Título + Botão de Login (se existir) */}
 								<div className="flex justify-between items-start mb-3">
-									<h3>{d.nome} - {d.number || d.codigo_impressora}</h3>
+									<h3>
+										{d.nome} - {d.number || d.codigo_impressora}
+										{d.operador && <span className="block text-sm font-normal text-gray-600 mt-1">Operador: {d.operador}</span>}
+									</h3>
 								</div>
 
 								{/* LISTA DE PRODUTOS */}

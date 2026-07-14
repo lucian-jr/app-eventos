@@ -14,6 +14,7 @@ export type DashboardDevicesType = {
     codigo_impressora: string | null;
     login: string | null;
     senha: string | null;
+    operador: string | null;
     vouchers_produto: Record<number, number>;
 };
 

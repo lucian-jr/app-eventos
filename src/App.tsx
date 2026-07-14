@@ -15,6 +15,7 @@ import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import Home from "./pages/Home/Home"
 import Login from './pages/Login/Login'
 import CreateEvent from './pages/CreateEvent/CreateEvent'
+import EditEvent from './pages/EditEvent/EditEvent'
 import Dashboard from './pages/Dashboard/Dashboard'
 
 const BASENAME = import.meta.env.BASE_URL || "/app-eventos";
@@ -52,6 +53,14 @@ function AppShell() {
             element={
               <ProtectedRoute>
                 <CreateEvent />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-event/:id"
+            element={
+              <ProtectedRoute>
+                <EditEvent />
               </ProtectedRoute>
             }
           />

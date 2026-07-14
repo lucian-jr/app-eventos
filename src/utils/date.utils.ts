@@ -10,6 +10,17 @@ export function formatDBDate(date: string|null|undefined): string {
   return result
 }
 
+export function formatEventDateRange(
+  dataInicio: string | null | undefined,
+  dataFim?: string | null | undefined
+): string {
+  const inicio = formatDBDate(dataInicio?.split(' ')[0] || dataInicio)
+  const fim = formatDBDate(dataFim?.split(' ')[0] || dataFim)
+
+  if (inicio && fim && inicio !== fim) return `${inicio} a ${fim}`
+  return inicio
+}
+
 export function formatDBDateTime(date: string|null|undefined): string {
   if (!date) return ''
 

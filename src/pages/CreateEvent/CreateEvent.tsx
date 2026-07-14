@@ -19,6 +19,7 @@ const CreateEvent = () => {
 	const navigate = useNavigate();
 	const [eventName, setEventName] = useState("");
 	const [eventDate, setEventDate] = useState("");
+	const [eventDateEnd, setEventDateEnd] = useState("");
 	const [eventLogin, setEventLogin] = useState("");
 	const [eventSenha, setEventSenha] = useState("");
 	const [productName, setProductName] = useState("");
@@ -27,6 +28,7 @@ const CreateEvent = () => {
 	const [device, setDevice] = useState("");
 	const [numeroImpressora, setNumeroImpressora] = useState("");
 	const [numeroImpressoraLeitor, setNumeroImpressoraLeitor] = useState("");
+	const [operador, setOperador] = useState("");
 	const [devices, setDevices] = useState<DevicesType[]>([]);
 	const [productsQuantityVisibility, setProductsQuantityVisibility] = useState(true);
 	const [error, setError] = useState("");
@@ -119,7 +121,8 @@ const CreateEvent = () => {
 		const newDevice: DevicesType = {
 			name: device,
 			number: numberImpressotaLeitorFormated,
-			numero_impressora: numeroImpressora
+			numero_impressora: numeroImpressora,
+			operador: isMaquininha && operador ? operador.trim() : null
 		}
 
 		setDevices(prev => [...prev, newDevice]);
@@ -127,6 +130,7 @@ const CreateEvent = () => {
 		setDevice("");
 		setNumeroImpressora("");
 		setNumeroImpressoraLeitor("");
+		setOperador("");
 		setError("");
 	};
 
@@ -140,7 +144,13 @@ const CreateEvent = () => {
 		e.preventDefault();
 		setLoading(true);
 
-		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate)) {
+		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate && eventDateEnd)) {
+			setLoading(false);
+			return;
+		}
+
+		if (eventDateEnd < eventDate) {
+			setError("A data final não pode ser anterior à data de início.");
 			setLoading(false);
 			return;
 		}
@@ -157,6 +167,7 @@ const CreateEvent = () => {
 			user_id: user?.id,
 			nome: eventName,
 			data_evento: eventDate,
+			data_fim: eventDateEnd,
 			login_evento: loginEvento,
 			senha_evento: senhaEvento,
 			devices: devices,
@@ -222,16 +233,31 @@ const CreateEvent = () => {
 						onChange={(e) => setEventName(e.target.value)}
 						required
 					/>
-
-					<input
-						className="h-9"
-						type="date"
-						name="data_evento"
-						placeholder="Data do evento"
-						value={eventDate}
-						onChange={(e) => setEventDate(e.target.value)}
-						required
-					/>
+				</div>
+				<div className="flex gap-5 mb-2">
+					<div className="w-[50%]">
+						<label className="block text-sm font-semibold mb-1 text-gray-600">Data de início</label>
+						<input
+							className="h-9 w-full px-3"
+							type="date"
+							name="data_evento"
+							value={eventDate}
+							onChange={(e) => setEventDate(e.target.value)}
+							required
+						/>
+					</div>
+					<div className="w-[50%]">
+						<label className="block text-sm font-semibold mb-1 text-gray-600">Data final</label>
+						<input
+							className="h-9 w-full px-3"
+							type="date"
+							name="data_fim"
+							value={eventDateEnd}
+							min={eventDate || undefined}
+							onChange={(e) => setEventDateEnd(e.target.value)}
+							required
+						/>
+					</div>
 				</div>
 				<div className="flex gap-5 mb-8">
 					<input
@@ -270,15 +296,26 @@ const CreateEvent = () => {
 					</select>
 
 					{device === 'Maquininha PDV' &&
-						<input
-							className="h-9"
-							type="text"
-							name="numero_impressora"
-							placeholder="Ex: 000303"
-							value={numeroImpressora ?? ""}
-							onChange={(e) => setNumeroImpressora(e.target.value)}
-							required
-						/>
+						<>
+							<input
+								className="h-9"
+								type="text"
+								name="numero_impressora"
+								placeholder="Ex: 000303"
+								value={numeroImpressora ?? ""}
+								onChange={(e) => setNumeroImpressora(e.target.value)}
+								required
+							/>
+							<input
+								className="px-7 h-9"
+								type="text"
+								name="operador"
+								placeholder="Nome do operador"
+								value={operador}
+								onChange={(e) => setOperador(e.target.value)}
+								maxLength={200}
+							/>
+						</>
 					}
 
 					{device === 'Leitor + impressora' &&
@@ -301,7 +338,7 @@ const CreateEvent = () => {
 						? (
 							devices.map((device, idx) => (
 								<p key={idx} className="font-bold text-[14px]">
-									{device.name} {device.number || device.numero_impressora}
+									{device.name} {device.number || device.numero_impressora}{device.operador ? ` - ${device.operador}` : ''}
 									<button
 										type='button'
 										className="ml-2.5 text-red-700"
@@ -325,7 +362,7 @@ const CreateEvent = () => {
 						value={productName}
 					>
 						<option value="" disabled>Selecione o tipo de produto</option>
-						<option value="Copo Eco">Copo Eco</option>
+						<option value="Copo retornável">Copo retornável</option>
 						<option value="Cartão Cashless">Cartão Cashless</option>
 					</select>
 

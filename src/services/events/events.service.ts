@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { api } from '../api'
-import type { EventsGetResponseType, EventGetResponseType, PostEventType, EventPostResponseType } from './events.types'
+import type { EventsGetResponseType, EventGetResponseType, PostEventType, EventPostResponseType, PutEventType, EventPutResponseType } from './events.types'
 
 export const getEvents = async (user_id: number) => {
     try {
@@ -61,6 +61,26 @@ export const postEvent = async (eventData: PostEventType) => {
             'status': 'error',
             'message': message,
             'event_id': null
+        };
+    }
+}
+
+export const putEvent = async (eventData: PutEventType) => {
+    try {
+        const response = await api.post(`put_event?v=${Date.now()}`, eventData);
+
+        const data: EventPutResponseType = response.data;
+
+        return data;
+
+    } catch (error) {
+        console.log('events.service/putEvent error: ', error)
+
+        const message = (axios.isAxiosError(error) && error?.response?.data?.message) || 'Houve um problema ao atualizar o evento';
+
+        return {
+            'status': 'error',
+            'message': message,
         };
     }
 }
