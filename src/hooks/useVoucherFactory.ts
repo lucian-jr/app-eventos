@@ -3,7 +3,7 @@ import { createVoucherGenerationJob, getVoucherGenerationStatus } from '../servi
 import type { VoucherStatusDataType } from '../services/vouchers/vouchers.types';
 
 // ATUALIZAÇÃO 1: O hook agora recebe o ID do evento opcionalmente
-export const useVoucherFactory = (eventId?: number) => {
+export const useVoucherFactory = (eventId?: number, userId?: number, adminToken?: string | null) => {
     const [isStarting, setIsStarting] = useState(false);
     const [progresso, setProgresso] = useState<VoucherStatusDataType>({
         status_job: 'idle',
@@ -21,8 +21,9 @@ export const useVoucherFactory = (eventId?: number) => {
         const response = await createVoucherGenerationJob({
             id_evento: idEventoParams,
             id_produto: produtoId,
-            quantidade: qtd
-        });
+            quantidade: qtd,
+            user_id: userId,
+        }, adminToken);
 
         setIsStarting(false);
 
@@ -41,7 +42,7 @@ export const useVoucherFactory = (eventId?: number) => {
         if (!eventId) return;
 
         // ATUALIZAÇÃO 2: Passamos o ID para o service
-        const response = await getVoucherGenerationStatus(eventId);
+        const response = await getVoucherGenerationStatus(eventId, userId, adminToken);
 
         if (response.status === 'success' && response.data) {
             setProgresso(response.data);
@@ -57,7 +58,7 @@ export const useVoucherFactory = (eventId?: number) => {
                 }
             }
         }
-    }, [eventId]);
+    }, [eventId, userId, adminToken]);
 
     // --- FUNÇÃO 3: Ativar o Loop ---
     const monitorarProgresso = useCallback(() => {

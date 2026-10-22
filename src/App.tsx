@@ -1,7 +1,7 @@
 import './App.css'
 
 // Router
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 
 // Contexts
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import { adminTokenFromSearch } from "./utils/adminAccess";
 
 // Pages
 import Home from "./pages/Home/Home"
@@ -22,6 +23,8 @@ const BASENAME = import.meta.env.BASE_URL || "/app-eventos";
 
 function AppShell() {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  const adminToken = adminTokenFromSearch(location.search);
 
   if (loading) {
     return (
@@ -31,7 +34,7 @@ function AppShell() {
     );
   }
 
-  const pageHeight = user
+  const pageHeight = user || adminToken
     ? "container max-w-5xl mx-auto min-h-[60vh] mb-[3rem] mt-[2rem] px-4"
     : "w-full min-h-[100vh] flex justify-center items-center";
 
@@ -78,7 +81,7 @@ function AppShell() {
           />
         </Routes>
       </div>
-      {user && <Footer />}
+      {(user || adminToken) && <Footer />}
     </>
   );
 }

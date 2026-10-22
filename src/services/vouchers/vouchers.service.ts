@@ -1,14 +1,15 @@
 import axios from 'axios'
 import { api } from '../api' // Supondo que esteja em src/services/api
+import { adminQuery } from '../../utils/adminAccess'
 import type { 
     VoucherJobRequestType, 
     VoucherJobResponseType, 
     VoucherStatusResponseType 
 } from './vouchers.types'
 
-export const createVoucherGenerationJob = async (jobData: VoucherJobRequestType): Promise<VoucherJobResponseType> => {
+export const createVoucherGenerationJob = async (jobData: VoucherJobRequestType, adminToken?: string | null): Promise<VoucherJobResponseType> => {
     try {
-        const response = await api.post(`criar_pedido_geracao?v=${Date.now()}`, jobData);
+        const response = await api.post(`criar_pedido_geracao?v=${Date.now()}${adminQuery(adminToken)}`, jobData);
         
         const data: VoucherJobResponseType = response.data;
 
@@ -27,11 +28,12 @@ export const createVoucherGenerationJob = async (jobData: VoucherJobRequestType)
     }
 }
 
-export const getVoucherGenerationStatus = async (eventId?: number): Promise<VoucherStatusResponseType> => {
+export const getVoucherGenerationStatus = async (eventId?: number, userId?: number, adminToken?: string | null): Promise<VoucherStatusResponseType> => {
     try {
         const paramEvento = eventId ? `&id_evento=${eventId}` : '';
+        const paramUser = userId ? `&user_id=${userId}` : '';
         
-        const response = await api.get(`consultar_status_geracao?v=${Date.now()}${paramEvento}`);
+        const response = await api.get(`consultar_status_geracao?v=${Date.now()}${paramEvento}${paramUser}${adminQuery(adminToken)}`);
         
         const data: VoucherStatusResponseType = response.data;
 

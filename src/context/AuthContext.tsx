@@ -1,6 +1,7 @@
 import { useContext, createContext, type ReactNode, useState, useEffect } from 'react';
 import { authLogin, checkIsAuth } from '../services/auth/auth.service';
 import type { userType } from '../services/auth/auth.types';
+import { adminTokenFromSearch } from '../utils/adminAccess';
 
 type LoginUserData = { login: string; password: string };
 
@@ -38,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(u);
           localStorage.setItem(LS_KEY, JSON.stringify(u));
+        } else if (adminTokenFromSearch(window.location.search)) {
+          setUser(null);
         } else {
           // não autenticado
           if (isLocalhost) {

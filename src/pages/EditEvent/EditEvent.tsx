@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { Delete } from "@mui/icons-material";
 
@@ -7,17 +7,22 @@ import type { DevicesType, EventDeviceType } from '../../services/events/events.
 import { getEvent, putEvent } from '../../services/events/events.service';
 import { useAuth } from '../../context/AuthContext';
 import { Loader } from '../../components/Loader/Loader';
+import { adminTokenFromSearch, pathWithAdmin, adminRequestUserId } from '../../utils/adminAccess';
 
 const EditEvent = () => {
 	const { id: eventId } = useParams();
+	const [searchParams] = useSearchParams();
+	const adminToken = adminTokenFromSearch(searchParams.toString());
 	const { user } = useAuth();
 	const navigate = useNavigate();
 
 	const [isLoading, setIsLoading] = useState(true);
+	const [hasAccess, setHasAccess] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 
 	const [eventName, setEventName] = useState("");
+	const [numeroPedido, setNumeroPedido] = useState("");
 	const [eventDate, setEventDate] = useState("");
 	const [eventDateEnd, setEventDateEnd] = useState("");
 	const [eventLogin, setEventLogin] = useState("");
@@ -33,13 +38,18 @@ const EditEvent = () => {
 
 	useEffect(() => {
 		const fetchEvent = async () => {
-			if (!user || !eventId) return;
+			if (!eventId || (!user && !adminToken)) {
+				setError('Você não tem acesso a este evento.');
+				setIsLoading(false);
+				return;
+			}
 
 			setIsLoading(true);
-			const res = await getEvent(parseInt(eventId), user.id);
+			setHasAccess(false);
+			const res = await getEvent(parseInt(eventId), adminRequestUserId(user?.id, adminToken), adminToken);
 
 			if (res.status !== 'success' || !res.event_data) {
-				setError(res.message || 'Evento não encontrado.');
+				setError(res.message || 'Você não tem acesso a este evento.');
 				setIsLoading(false);
 				return;
 			}
@@ -47,6 +57,7 @@ const EditEvent = () => {
 			const event = res.event_data;
 
 			setEventName(event.nome);
+			setNumeroPedido(event.numero_pedido || '');
 			setEventDate(event.data_evento?.split(' ')[0] || event.data_evento);
 			setEventDateEnd(event.data_fim?.split(' ')[0] || event.data_fim || '');
 			setEventLogin(event.login_evento || '');
@@ -58,11 +69,12 @@ const EditEvent = () => {
 			const hasEventLogin = !!(event.login_evento || event.senha_evento);
 			setShowEventLogin(hasLeitor || hasEventLogin);
 
+			setHasAccess(true);
 			setIsLoading(false);
 		};
 
 		fetchEvent();
-	}, [eventId, user]);
+	}, [eventId, user, adminToken]);
 
 	const handleOperadorChange = (deviceId: number, value: string) => {
 		setExistingDevices(prev =>
@@ -108,7 +120,7 @@ const EditEvent = () => {
 		setLoading(true);
 		setError("");
 
-		if (!eventName || !eventDate || !eventDateEnd || !eventId) {
+		if (!eventName || !numeroPedido.trim() || !eventDate || !eventDateEnd || !eventId) {
 			setError("Preencha os campos obrigatórios.");
 			setLoading(false);
 			return;
@@ -137,13 +149,14 @@ const EditEvent = () => {
 			user_id: user?.id,
 			id: parseInt(eventId),
 			nome: eventName,
+			numero_pedido: numeroPedido.trim(),
 			data_evento: eventDate,
 			data_fim: eventDateEnd,
 			login_evento: showEventLogin ? eventLogin : '',
 			senha_evento: showEventLogin ? eventSenha : '',
 			new_devices: newDevices,
 			operadores_update,
-		});
+		}, adminToken);
 
 		if (res.status !== 'success') {
 			setError(res.message);
@@ -152,13 +165,24 @@ const EditEvent = () => {
 		}
 
 		alert('Evento atualizado com sucesso!');
-		navigate(`/dashboard/${eventId}`, { replace: true });
+		navigate(pathWithAdmin(`/dashboard/${eventId}`, adminToken), { replace: true });
 	};
 
 	if (isLoading) {
 		return (
 			<div className="flex justify-center items-center h-[60vh]">
 				<Loader />
+			</div>
+		);
+	}
+
+	if (!hasAccess) {
+		return (
+			<div>
+				<p className="msg error-msg mb-4">{error || 'Você não tem acesso a este evento.'}</p>
+				<button type="button" className="btn btn--filled-mid-green" onClick={() => navigate('/')}>
+					VOLTAR
+				</button>
 			</div>
 		);
 	}
@@ -170,7 +194,7 @@ const EditEvent = () => {
 				<button
 					type="button"
 					className="btn btn--filled-mid-green"
-					onClick={() => navigate(`/dashboard/${eventId}`)}
+					onClick={() => navigate(pathWithAdmin(`/dashboard/${eventId}`, adminToken))}
 				>
 					VOLTAR
 				</button>
@@ -181,7 +205,7 @@ const EditEvent = () => {
 			<form onSubmit={updateEvent}>
 				<div className="flex gap-5 mb-2">
 					<input
-						className="px-7 h-9 w-full"
+						className="px-7 h-9 w-[70%] min-w-0"
 						type="text"
 						name="nome"
 						placeholder="Nome do evento"
@@ -189,10 +213,19 @@ const EditEvent = () => {
 						onChange={(e) => setEventName(e.target.value)}
 						required
 					/>
+					<input
+						className="px-7 h-9 w-[30%] min-w-0"
+						type="text"
+						name="numero_pedido"
+						placeholder="Número do pedido do evento"
+						value={numeroPedido}
+						onChange={(e) => setNumeroPedido(e.target.value)}
+						required
+					/>
 				</div>
-				<div className="flex gap-5 mb-2">
+				<div className="flex gap-5 mt-4 mb-2">
 					<div className="w-[50%]">
-						<label className="block text-sm font-semibold mb-1 text-gray-600">Data de início</label>
+						<label className="block text-sm font-semibold mb-1! text-gray-600">Data de início</label>
 						<input
 							className="h-9 w-full px-3"
 							type="date"
@@ -203,7 +236,7 @@ const EditEvent = () => {
 						/>
 					</div>
 					<div className="w-[50%]">
-						<label className="block text-sm font-semibold mb-1 text-gray-600">Data final</label>
+						<label className="block text-sm font-semibold mb-1! text-gray-600">Data final</label>
 						<input
 							className="h-9 w-full px-3"
 							type="date"
@@ -327,7 +360,7 @@ const EditEvent = () => {
 					<button
 						type="button"
 						className="btn"
-						onClick={() => navigate(`/dashboard/${eventId}`)}
+						onClick={() => navigate(pathWithAdmin(`/dashboard/${eventId}`, adminToken))}
 					>
 						CANCELAR
 					</button>

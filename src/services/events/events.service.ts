@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { api } from '../api'
+import { adminQuery } from '../../utils/adminAccess'
 import type { EventsGetResponseType, EventGetResponseType, PostEventType, EventPostResponseType, PutEventType, EventPutResponseType } from './events.types'
 
 export const getEvents = async (user_id: number) => {
@@ -23,9 +24,9 @@ export const getEvents = async (user_id: number) => {
     }
 }
 
-export const getEvent = async (id: number, user_id: number) => {
+export const getEvent = async (id: number, user_id: number, adminToken?: string | null) => {
     try {
-        const response = await api.get(`get_user_event/${id}/${user_id}?v=${Date.now()}`);
+        const response = await api.get(`get_user_event/${id}/${user_id}?v=${Date.now()}${adminQuery(adminToken)}`);
         
         const data: EventGetResponseType = response.data;
 
@@ -65,9 +66,9 @@ export const postEvent = async (eventData: PostEventType) => {
     }
 }
 
-export const putEvent = async (eventData: PutEventType) => {
+export const putEvent = async (eventData: PutEventType, adminToken?: string | null) => {
     try {
-        const response = await api.post(`put_event?v=${Date.now()}`, eventData);
+        const response = await api.post(`put_event?v=${Date.now()}${adminQuery(adminToken)}`, eventData);
 
         const data: EventPutResponseType = response.data;
 

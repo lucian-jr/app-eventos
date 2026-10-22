@@ -18,6 +18,7 @@ const CreateEvent = () => {
 	const { user } = useAuth();
 	const navigate = useNavigate();
 	const [eventName, setEventName] = useState("");
+	const [numeroPedido, setNumeroPedido] = useState("");
 	const [eventDate, setEventDate] = useState("");
 	const [eventDateEnd, setEventDateEnd] = useState("");
 	const [eventLogin, setEventLogin] = useState("");
@@ -144,7 +145,7 @@ const CreateEvent = () => {
 		e.preventDefault();
 		setLoading(true);
 
-		if (!(devices.length > 0 && products.length > 0 && eventName && eventDate && eventDateEnd)) {
+		if (!(devices.length > 0 && products.length > 0 && eventName && numeroPedido.trim() && eventDate && eventDateEnd)) {
 			setLoading(false);
 			return;
 		}
@@ -166,6 +167,7 @@ const CreateEvent = () => {
 		const eventData: PostEventType = {
 			user_id: user?.id,
 			nome: eventName,
+			numero_pedido: numeroPedido.trim(),
 			data_evento: eventDate,
 			data_fim: eventDateEnd,
 			login_evento: loginEvento,
@@ -225,7 +227,7 @@ const CreateEvent = () => {
 			<form onSubmit={createEvent}>
 				<div className="flex gap-5 mb-2">
 					<input
-						className="px-7 h-9 w-[100%]"
+						className="px-7 h-9 w-[70%] min-w-0"
 						type="text"
 						name="nome"
 						placeholder="Nome do evento"
@@ -233,10 +235,19 @@ const CreateEvent = () => {
 						onChange={(e) => setEventName(e.target.value)}
 						required
 					/>
+					<input
+						className="px-7 h-9 w-[30%] min-w-0"
+						type="text"
+						name="numero_pedido"
+						placeholder="Número do pedido do evento"
+						value={numeroPedido}
+						onChange={(e) => setNumeroPedido(e.target.value)}
+						required
+					/>
 				</div>
-				<div className="flex gap-5 mb-2">
+				<div className="flex gap-5 mt-4 mb-2">
 					<div className="w-[50%]">
-						<label className="block text-sm font-semibold mb-1 text-gray-600">Data de início</label>
+						<label className="block text-sm font-semibold mb-1! text-gray-600">Data de início</label>
 						<input
 							className="h-9 w-full px-3"
 							type="date"
@@ -247,7 +258,7 @@ const CreateEvent = () => {
 						/>
 					</div>
 					<div className="w-[50%]">
-						<label className="block text-sm font-semibold mb-1 text-gray-600">Data final</label>
+						<label className="block text-sm font-semibold mb-1! text-gray-600">Data final</label>
 						<input
 							className="h-9 w-full px-3"
 							type="date"

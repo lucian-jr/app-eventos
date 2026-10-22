@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import './Dashboard.css'
 
@@ -15,6 +15,7 @@ import { getDashboardData } from "../../services/dashboard/dashboard.service";
 import { useVoucherFactory } from "../../hooks/useVoucherFactory";
 
 import { formatEventDateRange } from "../../utils/date.utils";
+import { adminTokenFromSearch, pathWithAdmin, adminRequestUserId } from "../../utils/adminAccess";
 
 import QRCode from "react-qr-code";
 import { QrCode2, Close } from "@mui/icons-material";
@@ -35,32 +36,47 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 const Dashboard = () => {
 
 	const { id: event_id } = useParams();
+	const [searchParams] = useSearchParams();
+	const adminToken = adminTokenFromSearch(searchParams.toString());
 	const navigate = useNavigate();
 	const { user } = useAuth();
 	const [event, setEvent] = useState<EventType | null>(null)
 	const [dashboardData, setDashboardData] = useState<DashboardDataType | null>(null)
 	const [isLoadingData, setIsLoadingData] = useState(true);
+	const [accessError, setAccessError] = useState("");
 
 	const [selectedDeviceForLogin, setSelectedDeviceForLogin] = useState<any | null>(null);
 
-	const { dados: progressoVouchers } = useVoucherFactory(event ? event.id : undefined);
+	const { dados: progressoVouchers } = useVoucherFactory(event ? event.id : undefined, user?.id, adminToken);
 
 	const fetchDataEvent = async () => {
-		if (!user || !event_id) return;
+		if (!event_id || (!user && !adminToken)) {
+			setAccessError('Você não tem acesso a este evento.');
+			setIsLoadingData(false);
+			return;
+		}
+
+		const requestUserId = adminRequestUserId(user?.id, adminToken);
 
 		setIsLoadingData(true);
+		setAccessError("");
+		setEvent(null);
+		setDashboardData(null);
 
 		try {
-			const res = await getEvent(parseInt(event_id), user.id);
+			const res = await getEvent(parseInt(event_id), requestUserId, adminToken);
+			const eventOk = res.status == 'success' && !!res.event_data;
 
-			if (res.status == 'success') {
-				setEvent(res.event_data)
+			if (eventOk && res.event_data) {
+				setEvent(res.event_data);
 			}
 
-			const resDashboardData = await getDashboardData(parseInt(event_id));
+			const resDashboardData = await getDashboardData(parseInt(event_id), requestUserId, adminToken);
 
 			if (resDashboardData.status == 'success') {
-				setDashboardData(resDashboardData.dashboard_data)
+				setDashboardData(resDashboardData.dashboard_data);
+			} else if (!eventOk) {
+				setAccessError(res.message || resDashboardData.message || 'Você não tem acesso a este evento.');
 			}
 		} catch (error) {
 			console.error("Erro ao buscar dados:", error);
@@ -71,7 +87,7 @@ const Dashboard = () => {
 
 	useEffect(() => {
 		fetchDataEvent();
-	}, [event_id, user]);
+	}, [event_id, user, adminToken]);
 
 	const getQrCodeData = (device: any) => {
 		const payload = {
@@ -130,13 +146,24 @@ const Dashboard = () => {
 		);
 	}
 
+	if (accessError) {
+		return (
+			<div>
+				<p className="msg error-msg mb-4">{accessError}</p>
+				<button type="button" className="btn btn--filled-mid-green" onClick={() => navigate('/')}>
+					VOLTAR
+				</button>
+			</div>
+		);
+	}
+
 	return (
 		<div>
 			{dashboardData ?
 				<div>
 					<div className="page-head">
-						<h1 className="page-title">{event?.nome} – {formatEventDateRange(event?.data_evento, event?.data_fim)}</h1>
-						<button className="btn-refresh" onClick={() => navigate(`/edit-event/${event_id}`)}>EDITAR EVENTO</button>
+						<h1 className="page-title">{[event?.nome, formatEventDateRange(event?.data_evento, event?.data_fim)].filter(Boolean).join(' – ') || `Evento ${event_id}`}</h1>
+						<button className="btn-refresh" onClick={() => navigate(pathWithAdmin(`/edit-event/${event_id}`, adminToken))}>EDITAR EVENTO</button>
 					</div>
 
 					<div className="flex justify-between items-center title-row">

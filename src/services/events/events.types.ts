@@ -19,6 +19,7 @@ export type ProductsType = {
 export type EventType = {
     id: number
     nome: string
+    numero_pedido?: string | null
     data_evento: string
     data_fim?: string | null
     login_evento?: string | null
@@ -36,6 +37,7 @@ export type EventsGetResponseType = {
 export type PostEventType = {
     user_id: number | undefined
     nome: string
+    numero_pedido: string
     data_evento: string
     data_fim: string
     login_evento: string
@@ -48,6 +50,7 @@ export type PutEventType = {
     user_id: number | undefined
     id: number
     nome: string
+    numero_pedido: string
     data_evento: string
     data_fim: string
     login_evento: string

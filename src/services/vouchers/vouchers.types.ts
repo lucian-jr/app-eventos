@@ -4,6 +4,7 @@ export type VoucherJobRequestType = {
     id_evento: number;
     id_produto: number;
     quantidade: number;
+    user_id?: number;
 }
 
 export type VoucherJobResponseType = {

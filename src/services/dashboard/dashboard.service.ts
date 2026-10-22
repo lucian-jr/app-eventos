@@ -1,10 +1,11 @@
 import axios from 'axios'
 import { api } from '../api'
+import { adminQuery } from '../../utils/adminAccess'
 import type { DashboardGetResponseType } from './dashboard.types'
 
-export const getDashboardData = async (id_evento: number) => {
+export const getDashboardData = async (id_evento: number, user_id: number, adminToken?: string | null) => {
     try {
-        const response = await api.get(`get_dashboard_data/${id_evento}?v=${Date.now()}`);
+        const response = await api.get(`get_dashboard_data/${id_evento}?v=${Date.now()}&user_id=${user_id}${adminQuery(adminToken)}`);
         
         const data: DashboardGetResponseType = response.data;
 
