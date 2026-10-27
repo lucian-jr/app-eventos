@@ -16,6 +16,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const LS_KEY = "mce:user";
+const REDIRECT_KEY = "mce:login-redirect";
 const isLocalhost = window.location.hostname === "localhost";
 const redirectLoginUrlBase = "https://www.meucopoeco.com.br/site/login?src=";
 
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchAuth = async () => {
       setLoading(true);
+      let leaving = false;
       try {
         const res = await checkIsAuth();
 
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           setUser(u);
           localStorage.setItem(LS_KEY, JSON.stringify(u));
+          sessionStorage.removeItem(REDIRECT_KEY);
         } else if (adminTokenFromSearch(window.location.search)) {
           setUser(null);
         } else {
@@ -57,11 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUser(null);   // ⬅️ deslogado
             }
           } else {
-            // produção: limpa e redireciona para SSO externo com retorno para a URL atual
             localStorage.removeItem(LS_KEY);
-            setUser(null); // ⬅️ deslogado
-            const returnUrl = encodeURIComponent(window.location.href);
-            window.location.href = `${redirectLoginUrlBase}${returnUrl}`;
+            const alreadyReturned = sessionStorage.getItem(REDIRECT_KEY) === "1";
+            if (alreadyReturned) {
+              // O site já devolveu para cá. Mostra o login do app em vez de piscar para sempre.
+              sessionStorage.removeItem(REDIRECT_KEY);
+              setUser(null);
+            } else {
+              sessionStorage.setItem(REDIRECT_KEY, "1");
+              const returnUrl = encodeURIComponent(window.location.href);
+              leaving = true;
+              window.location.href = `${redirectLoginUrlBase}${returnUrl}`;
+              return;
+            }
           }
         }
       } catch (err) {
@@ -69,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError("Falha ao verificar autenticação.");
         setUser(null); // fallback seguro
       } finally {
-        setLoading(false);
+        if (!leaving) setLoading(false);
       }
     };
 

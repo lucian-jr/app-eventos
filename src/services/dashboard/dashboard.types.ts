@@ -15,6 +15,7 @@ export type DashboardDevicesType = {
     login: string | null;
     senha: string | null;
     operador: string | null;
+    id_notebook?: number | null;
     vouchers_produto: Record<number, number>;
 };
 

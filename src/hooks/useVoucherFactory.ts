@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createVoucherGenerationJob, getVoucherGenerationStatus } from '../services/vouchers/vouchers.service';
 import type { VoucherStatusDataType } from '../services/vouchers/vouchers.types';
+import { useAppAlert } from '../components/Alert/Alert';
 
 // ATUALIZAÇÃO 1: O hook agora recebe o ID do evento opcionalmente
 export const useVoucherFactory = (eventId?: number, userId?: number, adminToken?: string | null) => {
+    const { notify } = useAppAlert();
     const [isStarting, setIsStarting] = useState(false);
     const [progresso, setProgresso] = useState<VoucherStatusDataType>({
         status_job: 'idle',
@@ -32,7 +34,11 @@ export const useVoucherFactory = (eventId?: number, userId?: number, adminToken?
             // Força o início do monitoramento após criar
             monitorarProgresso(); 
         } else {
-            alert(`Erro: ${response.message}`);
+            await notify({
+                title: 'Erro ao gerar vouchers',
+                message: response.message || 'Não foi possível iniciar a geração.',
+                variant: 'error',
+            });
         }
     };
 

@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Navbar from './components/Navbar/Navbar'
 import Footer from './components/Footer/Footer'
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import { AlertProvider } from "./components/Alert/Alert";
 import { adminTokenFromSearch } from "./utils/adminAccess";
 
 // Pages
@@ -90,7 +91,9 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter basename={BASENAME}>
-        <AppShell />
+        <AlertProvider>
+          <AppShell />
+        </AlertProvider>
       </BrowserRouter>
     </AuthProvider>
   );

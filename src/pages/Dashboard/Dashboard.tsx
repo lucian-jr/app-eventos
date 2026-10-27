@@ -138,6 +138,49 @@ const Dashboard = () => {
 		);
 	}
 
+	const notebooks = (dashboardData?.devices_data || [])
+		.filter((device) => device.nome === 'Notebook')
+		.sort((a, b) => Number(a.id) - Number(b.id));
+	const looseDevices = (dashboardData?.devices_data || [])
+		.filter((device) => device.nome !== 'Notebook' && !device.id_notebook);
+
+	const renderDeviceCard = (device: (typeof notebooks)[number], title: string) => (
+		<div className="device" key={device.id}>
+			<div className="flex justify-between items-start mb-3">
+				<h3>
+					{title}
+					{device.operador && <span className="block text-sm font-normal text-gray-600 mt-1">Operador: {device.operador}</span>}
+				</h3>
+			</div>
+
+			{Object.entries(device.vouchers_produto || {}).map(([productId, qtd]) => {
+				const product = dashboardData?.products_data.find(
+					(p) => String(p.id) === String(productId)
+				);
+
+				return (
+					<div key={productId}>
+						<div className="metric">
+							<div className="label">{product?.nome ?? `Produto ${productId}`}</div>
+							<div className="val">{qtd}</div>
+						</div>
+					</div>
+				);
+			})}
+
+			{device.codigo_impressora && device.login ? (
+				<div
+					className="login-device cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-2 px-2 py-1 rounded border border-gray-200"
+					onClick={() => setSelectedDeviceForLogin(device)}
+					title="Gerar QR Code de Login"
+				>
+					<QrCode2 fontSize="small" />
+					<span className="text-sm font-semibold">Fazer login</span>
+				</div>
+			) : null}
+		</div>
+	);
+
 	if (isLoadingData) {
 		return (
 			<div className="flex justify-center items-center h-[80vh]">
@@ -171,7 +214,7 @@ const Dashboard = () => {
 						<button className="btn-refresh" onClick={fetchDataEvent}>ATUALIZAR DADOS</button>
 					</div>
 
-					{dashboardData.user.login && !dashboardData.user.login.startsWith('pdv_') && (
+					{dashboardData.user?.login && !dashboardData.user.login.startsWith('pdv_') && notebooks.length === 0 && (
 						<div className="pill-collum flex">
 							<div className="mr-10"><strong>Login:</strong> {dashboardData.user.login}</div>
 							<div><strong>Senha:</strong> {dashboardData.user.senha}</div>
@@ -220,47 +263,39 @@ const Dashboard = () => {
 
 					<h2 className="section-title">Total de vouchers impressos por dispositivo</h2>
 
-					<div className="devices" >
-						{dashboardData && dashboardData.devices_data.map((d, index) => (
-							<div className="device" key={index}>
+					<div className="flex flex-col gap-4">
+						{notebooks.map((notebook, notebookIndex) => {
+							const readers = (dashboardData.devices_data || [])
+								.filter((device) => Number(device.id_notebook) === Number(notebook.id))
+								.sort((a, b) => Number(a.id) - Number(b.id));
 
-								{/* CABEÇALHO DO CARD: Título + Botão de Login (se existir) */}
-								<div className="flex justify-between items-start mb-3">
-									<h3>
-										{d.nome} - {d.number || d.codigo_impressora}
-										{d.operador && <span className="block text-sm font-normal text-gray-600 mt-1">Operador: {d.operador}</span>}
-									</h3>
-								</div>
-
-								{/* LISTA DE PRODUTOS */}
-								{Object.entries(d.vouchers_produto).map(([productId, qtd]) => {
-									const product = dashboardData.products_data.find(
-										(p) => String(p.id) === String(productId)
-									);
-
-									return (
-										<div key={productId}>
-											<div className="metric">
-												<div className="label">{product?.nome ?? `Produto ${productId}`}</div>
-												<div className="val">{qtd}</div>
-												{/* Botão de login REMOVIDO daqui */}
-											</div>
-										</div>
-									);
-								})}
-
-								{d.codigo_impressora && d.login ? (
-									<div
-										className="login-device cursor-pointer hover:bg-gray-100 transition-colors flex items-center gap-2 px-2 py-1 rounded border border-gray-200"
-										onClick={() => setSelectedDeviceForLogin(d)}
-										title="Gerar QR Code de Login"
-									>
-										<QrCode2 fontSize="small" />
-										<span className="text-sm font-semibold">Fazer login</span>
+							return (
+								<div key={notebook.id} className="rounded-[14px] bg-[#F3F3F3] p-4">
+									<h3 className="mb-1 text-[18px] font-black">Computador {notebookIndex + 1}</h3>
+									{(notebook.login || notebook.senha) && (
+										<p className="mb-4 text-sm font-bold text-gray-700">
+											Login: {notebook.login} · Senha: {notebook.senha}
+										</p>
+									)}
+									<div className="devices">
+										{readers.map((reader, readerIndex) => (
+											renderDeviceCard(reader, `Maquina ${readerIndex + 1} - ${reader.number || ''}`)
+										))}
 									</div>
-								) : null}
+								</div>
+							);
+						})}
+
+						{looseDevices.length > 0 && (
+							<div className="devices">
+								{looseDevices.map((device) => (
+									renderDeviceCard(
+										device,
+										`${device.nome} - ${device.number || device.codigo_impressora || ''}`
+									)
+								))}
 							</div>
-						))}
+						)}
 					</div>
 				</div>
 				:
