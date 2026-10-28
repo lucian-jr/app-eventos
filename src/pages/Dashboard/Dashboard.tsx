@@ -279,7 +279,7 @@ const Dashboard = () => {
 									)}
 									<div className="devices">
 										{readers.map((reader, readerIndex) => (
-											renderDeviceCard(reader, `Maquina ${readerIndex + 1} - ${reader.number || ''}`)
+											renderDeviceCard(reader, `Impressora/leitor ${readerIndex + 1} - ${reader.number || ''}`)
 										))}
 									</div>
 								</div>
